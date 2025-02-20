@@ -55,4 +55,24 @@ def assemble(instruction, labels, pc, output_file):
             if rd not in registers or rs1 not in registers:
                 raise ValueError(f"Invalid register at pc = {pc}")
             return immToBin(imm, 12) + registers[rs1] + funct3[instr] + registers[rd] + opcode[instr]
+        elif instr == "lw": #I-type lw
+            parts = instruction.replace(",", " ").replace("(", " ").replace(")", "").split()
+            if len(parts) != 4:
+                raise ValueError(f"Instruction length error at pc = {pc}")
+            rd, offset, rs1 = parts[1], int(parts[2]), parts[3]
+            if rs1 not in registers or rd not in registers:
+                raise ValueError(f"Invalid register at pc = {pc}")
+            imm = immToBin(offset, 12)
+            return imm + registers[rs1] + funct3[instr] + registers[rd] + opcode[instr]
+        
+
+        elif instr == "sw": # S-type
+            parts = instruction.replace(",", " ").replace("(", " ").replace(")", "").split()
+            if len(parts) != 4:
+                raise ValueError(f"Instruction length error at pc = {pc}")
+            rs2, offset, rs1 = parts[1], int(parts[2]), parts[3]
+            if rs1 not in registers or rs2 not in registers:
+                raise ValueError(f"Invalid register at pc = {pc}")
+            imm = immToBin(offset, 12)
+            return imm[:7] + registers[rs2] + registers[rs1] + funct3[instr] + imm[7:] + opcode[instr]    
         
