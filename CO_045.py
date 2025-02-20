@@ -109,4 +109,40 @@ def assemble(instruction, labels, pc, output_file):
     except ValueError as err:
         with open(output_file,"w") as file:
             return f"{err}"
-        
+
+def assembler(input_file, output_file):
+    labels= {}
+    instructions= []
+
+    with open(input_file, "r+") as file:
+        pc= 0
+        reader= file.readlines()
+        for line in reader:
+            line= line.strip()
+            if line == "" or line.startswith("#"): #empty line or comment
+                continue
+            if ":" in line:  # Label found
+                label, _, instr = line.partition(":") 
+                labels[label.strip()] = pc #eg) labels = {"start": 4}
+                if instr.strip()!= "":
+                    instructions.append(instr.strip())
+                    pc += 4
+            else:
+                instructions.append(line)
+                pc += 4
+
+    with open(output_file, "w+") as file:
+        pc = 0
+        for instr in instructions:
+            binary_instr = assemble(instr, labels, pc,output_file)
+            if binary_instr != None:
+                file.write(binary_instr + "\n")
+                pc += 4
+            else:
+                print(f"Error: Invalid instruction '{instr}' at PC {pc}")
+                return 
+
+    print(f"Assembly successful! Output written to {output_file}")
+    
+
+assembler("input.txt","output.txt")
