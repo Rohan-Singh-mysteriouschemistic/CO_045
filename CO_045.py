@@ -74,5 +74,39 @@ def assemble(instruction, labels, pc, output_file):
             if rs1 not in registers or rs2 not in registers:
                 raise ValueError(f"Invalid register at pc = {pc}")
             imm = immToBin(offset, 12)
-            return imm[:7] + registers[rs2] + registers[rs1] + funct3[instr] + imm[7:] + opcode[instr]    
+            return imm[:7] + registers[rs2] + registers[rs1] + funct3[instr] + imm[7:] + opcode[instr]
+        elif instr in ["beq", "bne", "blt"]: # B-type
+            if len(parts) != 4:
+                raise ValueError(f"Instruction length error at pc = {pc}")
+            rs1, rs2, label = parts[1], parts[2], parts[3]
+            if rs1 not in registers or rs2 not in registers:
+                raise ValueError(f"Invalid register at pc = {pc}")
+            if label in labels:
+                imm = (labels[label] - pc) 
+            else:
+                try:
+                    imm = int(label) 
+                except:
+                  raise ValueError(f"Label not found at pc = {pc}")  
+            imm_bin = immToBin(imm, 13)
+            return imm_bin[0] + imm_bin[2:8] + registers[rs2] + registers[rs1] + funct3[instr] + imm_bin[8:12] + imm_bin[1] + opcode[instr]
+        
+        elif instr == "jal": # J-type
+            if len(parts) != 3:
+                raise ValueError(f"Instruction length error at pc = {pc}")
+            rd, label = parts[1], parts[2]
+            if rd not in registers:
+                raise ValueError(f"Invalid register at pc = {pc}")
+            if label in labels:
+                imm = (labels[label] - pc) 
+            else:
+                raise ValueError(f"Label {label} not found at pc = {pc}")
+            imm_bin = immToBin(imm, 21)
+            return imm_bin[0] + imm_bin[1:9] + imm_bin[9] + imm_bin[10:20] + registers[rd] + opcode[instr]
+        
+        else:
+            raise ValueError(f"Unsupported instruction at pc = {pc}")
+    except ValueError as err:
+        with open(output_file,"w") as file:
+            return f"{err}"
         
