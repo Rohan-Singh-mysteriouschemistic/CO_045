@@ -167,3 +167,91 @@ with open(input_file,"r+") as file:  #input the test file here
     
     instructions = [line.strip() for line in file.readlines()]
     
+    pc = 0
+    pc1 = 0
+    while pc1 < len(instructions): #goes through the instructions one by one
+        instr = instructions[pc1]
+
+        if instr == "11111111111111111111111111111111":
+            print("Virtual Halt Encountered. Stopping Execution.")
+            print_memory()  # Print memory stats after halt
+            break
+        opcode = instr[-7:]
+        
+        #r type:
+        if opcode in ["0110011"]:
+            rInstr = Rtype(instr)
+            
+            if rInstr.parts["funct3"] == "000" and rInstr.parts["funct7"] == "0000000":
+                rInstr.add()
+            elif rInstr.parts["funct3"] == "000" and rInstr.parts["funct7"] == "0100000":
+                rInstr.sub()
+            elif rInstr.parts["funct3"] == "010" and rInstr.parts["funct7"] == "0000000":
+                rInstr.slt()
+            elif rInstr.parts["funct3"] == "101" and rInstr.parts["funct7"] == "0000000":
+                rInstr.srl()
+            elif rInstr.parts["funct3"] == "110" and rInstr.parts["funct7"] == "0000000":
+                rInstr.or_operation()
+            else:
+                rInstr.and_operation()
+            
+            pc+=4
+            pc1+=1
+            
+            
+        #i Type
+        elif opcode in ["0000011","0010011","1100111"]:
+            iInstr = Itype(instr)
+            if iInstr.parts["funct3"] == "000" and iInstr.parts["opcode"] == "0010011" :
+                iInstr.addi()
+                pc+=4
+                pc1+=1
+            elif iInstr.parts["funct3"] == "000" and iInstr.parts["opcode"] == "1100111" :
+                pc = iInstr.jalr(pc)
+                pc1 = pc//4
+            elif iInstr.parts["funct3"] == "010":
+                iInstr.lw()
+                pc+=4
+                pc1+=1
+                
+            
+        #s type 
+        elif opcode in ["0100011"]:
+            sInstr = Stype(instr)
+            
+            if sInstr.parts["opcode"] == "0100011" and sInstr.parts["funct3"] == "010":
+                sInstr.sw()
+            pc+=4
+            pc1+=1
+            
+        
+        #b type
+        elif opcode in ["1100011"]:
+            pc_old = pc1
+            bInstr = Btype(instr)
+            
+            if bInstr.parts["opcode"] == "1100011" and bInstr.parts["funct3"] == "000":
+                pc = bInstr.beq(pc)
+                pc1 = pc//4
+            elif bInstr.parts["opcode"] == "1100011" and bInstr.parts["funct3"] == "001":     
+                pc = bInstr.bne(pc)
+                pc1 = pc//4
+            if pc1 == pc_old:
+                print_registers(pc)
+                break
+            
+        #j type
+        elif opcode in ["1101111"]:
+            jInstr = Jtype(instr)
+            
+            if jInstr.parts["opcode"] == "1101111":
+                pc = jInstr.jal(pc)
+                pc1 = pc//4
+        
+        else:
+            print("Invalid instruction ")
+            break
+        registers[0] = 0
+        print_registers(pc)
+        
+print_memory(memory)
