@@ -122,3 +122,48 @@ class Stype:
     def sw(self):
         address = decimal_to_hex(registers[self.parts["rs1"]] + imm_extend(self.parts["imm"]))
         memory[address] = registers[self.parts["rs2"]]
+
+# B-type Instruction Class
+class Btype:
+    def __init__(self, instruction):
+        self.instr = instruction
+        self.parts = {
+            "opcode": self.instr[25:32],
+            "funct3": self.instr[17:20],
+            "rs1": bin_to_decimal_u(self.instr[12:17]),
+            "rs2": bin_to_decimal_u(self.instr[7:12]),
+            "imm": self.instr[0] + self.instr[24] + self.instr[1:7] + self.instr[20:24] + "0"
+        }
+        
+    def beq(self, pc):
+        if registers[self.parts["rs1"]] == registers[self.parts["rs2"]]:
+            new_pc = pc + imm_extend(self.parts["imm"])
+            return new_pc & ~1
+        return pc + 4
+
+    def bne(self, pc):
+        if registers[self.parts["rs1"]] != registers[self.parts["rs2"]]:
+            new_pc = pc + imm_extend(self.parts["imm"])
+            return new_pc & ~1
+        return pc + 4
+
+# J-type Instruction Class
+class Jtype:
+    def __init__(self, instruction):
+        self.instr = instruction
+        self.parts = {
+            "opcode": self.instr[25:32],
+            "rd": bin_to_decimal_u(self.instr[20:25]),
+            "imm": self.instr[0] + self.instr[12:20] + self.instr[11] + self.instr[1:11] + "0"
+        }
+        
+    def jal(self, pc):
+        registers[self.parts["rd"]] = pc + 4
+        return pc + imm_extend(self.parts["imm"])
+
+
+with open(input_file,"r+") as file:  #input the test file here
+    #read the first line of the text file:
+    
+    instructions = [line.strip() for line in file.readlines()]
+    
